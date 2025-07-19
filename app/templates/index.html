@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Credit Azure - AI-Powered Credit Analysis</title>
+    
+    <!-- Bootstrap CSS for quick styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-top: 50px;
+            padding: 40px;
+        }
+        
+        .header-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header-section h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .header-section p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .analysis-form {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .results-section {
+            display: none;
+            background: #e8f5e8;
+            padding: 30px;
+            border-radius: 10px;
+            border-left: 5px solid #28a745;
+        }
+        
+        .error-section {
+            display: none;
+            background: #f8d7da;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #dc3545;
+            color: #721c24;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .btn-analyze {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+        }
+        
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="main-container">
+                    
+                    <!-- Header Section -->
+                    <div class="header-section">
+                        <h1>🏦 Deep Credit Azure</h1>
+                        <p>AI-Powered Credit Analysis Platform</p>
+                        <p class="text-muted">Get instant insights into your creditworthiness using advanced AI technology</p>
+                    </div>
+                    
+                    <!-- Features Row -->
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            <div class="feature-icon">🤖</div>
+                            <h5>AI Analysis</h5>
+                            <p class="text-muted">Advanced machine learning algorithms</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="feature-icon">⚡</div>
+                            <h5>Instant Results</h5>
+                            <p class="text-muted">Get analysis in seconds</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="feature-icon">🔒</div>
+                            <h5>Secure</h5>
+                            <p class="text-muted">Your data is protected</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Analysis Form -->
+                    <div class="analysis-form">
+                        <h3 class="mb-3">📊 Credit Analysis Request</h3>
+                        
+                        <form id="creditAnalysisForm">
+                            <div class="mb-3">
+                                <label for="creditData" class="form-label">Credit Information</label>
+                                <textarea 
+                                    class="form-control" 
+                                    id="creditData" 
+                                    rows="6" 
+                                    placeholder="Enter your credit information here... 
+Example:
+- Credit Score: 750
+- Annual Income: $65,000
+- Monthly Debt Payments: $1,200
+- Employment: Full-time, 3 years
+- Credit History: 8 years
+- Recent inquiries: 2"
+                                    required
+                                ></textarea>
+                                <div class="form-text">
+                                    Enter your credit details above. Include information like credit score, income, debts, employment status, etc.
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="analysisType" class="form-label">Analysis Type</label>
+                                <select class="form-select" id="analysisType">
+                                    <option value="basic">Basic Analysis</option>
+                                    <option value="detailed">Detailed Analysis</option>
+                                    <option value="custom">Custom Analysis</option>
+                                </select>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-analyze">
+                                    🔍 Analyze Credit Profile
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Loading Spinner -->
+                    <div class="loading-spinner" id="loadingSpinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Analyzing your credit profile...</p>
+                    </div>
+                    
+                    <!-- Error Section -->
+                    <div class="error-section" id="errorSection">
+                        <h5>❌ Analysis Error</h5>
+                        <p id="errorMessage">An error occurred during analysis.</p>
+                    </div>
+                    
+                    <!-- Results Section -->
+                    <div class="results-section" id="resultsSection">
+                        <h3 class="mb-3">📈 Analysis Results</h3>
+                        <div id="analysisResults">
+                            <!-- Results will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="text-center mt-5 pt-4 border-top">
+                        <p class="text-muted">
+                            <small>
+                                Deep Credit Azure v0.1.0 | 
+                                Powered by OpenAI & Azure Cosmos DB |
+                                <a href="/api/health" target="_blank">System Status</a>
+                            </small>
+                        </p>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html> 
