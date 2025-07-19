@@ -1,104 +1,75 @@
-"""
-Main Flask Application with OpenAI Integration
+from flask import Flask, render_template, request, Response, abort, jsonify
+import os, time, json, hashlib
+from . import db, responses
 
-This file contains:
-- Flask web application setup
-- Route definitions for web endpoints
-- OpenAI API integration logic
-- Request/response handling
-"""
+app = Flask(__name__, static_folder="static", template_folder="templates")
 
-from flask import Flask, render_template, request, jsonify
-import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file (for API keys, etc.)
-load_dotenv()
-
-# Create Flask application instance
-app = Flask(__name__)
-
-# Configure Flask app
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-me')
-
-# Import our helper modules
-# from app.db import get_cosmos_client, save_to_cosmos
-# from app.responses import generate_openai_response
-
-@app.route('/')
+@app.route("/")
 def index():
-    """
-    Main page route - serves the web interface
-    
-    Returns:
-        Rendered HTML template for the main page
-    """
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/api/analyze', methods=['POST'])
-def analyze_credit():
-    """
-    API endpoint for credit analysis using OpenAI
-    
-    Expected JSON payload:
-    {
-        "credit_data": "user's credit information",
-        "analysis_type": "basic|detailed|custom"
-    }
-    
-    Returns:
-        JSON response with analysis results
-    """
-    try:
-        # Get JSON data from the request
-        data = request.get_json()
-        
-        if not data or 'credit_data' not in data:
-            return jsonify({'error': 'Missing credit_data in request'}), 400
-        
-        credit_data = data['credit_data']
-        analysis_type = data.get('analysis_type', 'basic')
-        
-        # TODO: Implement OpenAI analysis logic
-        # response = generate_openai_response(credit_data, analysis_type)
-        
-        # TODO: Save results to Cosmos DB
-        # save_to_cosmos(credit_data, response)
-        
-        # Placeholder response
-        response = {
-            'status': 'success',
-            'analysis': 'Credit analysis would go here',
-            'credit_data_received': credit_data,
-            'analysis_type': analysis_type
-        }
-        
-        return jsonify(response)
-        
-    except Exception as e:
-        # Log the error and return user-friendly message
-        app.logger.error(f"Error in credit analysis: {str(e)}")
-        return jsonify({'error': 'Internal server error'}), 500
+# 1️⃣ Kick‑off
+@app.post("/start")
+def start():
+    q = request.json["query"]
+    run = responses.start_research(
+        q,
+        f"{request.url_root}webhook?token={os.environ['WEBHOOK_TOKEN']}"
+    )
+    db.current.create_item({"id": run.id, "status": "running"})
+    return {"run_id": run.id}, 202
 
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """
-    Health check endpoint to verify the service is running
-    
-    Returns:
-        JSON status response
-    """
-    return jsonify({
-        'status': 'healthy',
-        'service': 'deep-credit-azure',
-        'version': '0.1.0'
-    })
+# 2️⃣ Webhook
+@app.post("/webhook")
+def webhook():
+    if request.args.get("token") != os.environ["WEBHOOK_TOKEN"]:
+        abort(403)
+    payload = request.get_json()
+    run_id = payload["response"]["id"]
+    text = payload["response"]["choices"][0]["message"]["content"]
+    now = time.time()
 
-if __name__ == '__main__':
-    # Run the Flask development server
-    # In production, use a proper WSGI server like Gunicorn
-    app.run(
-        debug=True,           # Enable debug mode for development
-        host='0.0.0.0',       # Allow external connections
-        port=5000             # Port to run the server on
-    ) 
+    db.current.upsert_item({"id": run_id, "status": "done", "report": text})
+    db.history.create_item({"run_id": run_id, "ts": now, "report": text})
+    return "", 200
+
+# 3️⃣ SSE stream
+@app.get("/stream/<run_id>")
+def stream(run_id):
+    def gen():
+        last = None
+        while True:
+            doc = db.current.read_item(run_id, run_id)
+            if doc.get("report") != last:
+                last = doc.get("report")
+                yield f"data: {json.dumps({'report': last})}\n\n"
+            if doc["status"] != "running":
+                break
+            time.sleep(2)
+    return Response(gen(), mimetype="text/event-stream")
+
+# 4️⃣ Edit selected text
+@app.post("/edit")
+def edit():
+    data = request.json
+    edited = responses.edit_snippet(data["original"], data["instruction"])
+    doc = db.current.read_item(data["run_id"], data["run_id"])
+    new_report = doc["report"].replace(data["original"], edited)
+    now = time.time()
+    db.current.upsert_item({"id": data["run_id"], "status": "done", "report": new_report})
+    db.history.create_item({"run_id": data["run_id"], "ts": now, "report": new_report})
+    return {"report": new_report}
+
+# 5️⃣ Rollback
+@app.post("/rollback")
+def rollback():
+    data = request.json
+    query = f"SELECT * FROM c WHERE c.run_id=@rid AND c.ts=@ts"
+    items = list(db.history.query_items(query,
+                parameters=[{"name":"@rid","value":data["run_id"]},
+                            {"name":"@ts","value":data["ts"]}],
+                enable_cross_partition_query=True))
+    if not items:
+        abort(404)
+    db.current.upsert_item({"id": data["run_id"], "status": "rolled", "report": items[0]["report"]})
+    return {"report": items[0]["report"]}
