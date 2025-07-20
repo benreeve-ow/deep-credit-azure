@@ -2,7 +2,6 @@
 WSGI Entry Point for Azure App Service
 
 This is the main entry point that Azure App Service will use to start the Flask application.
-Azure App Service looks for 'app:app' which means it expects this file to have an 'app' variable.
 """
 
 import os
@@ -42,5 +41,4 @@ def test():
     """Simple test endpoint"""
     return {"message": "Test endpoint working", "timestamp": datetime.now().isoformat()}
 
-# This is the variable that Azure App Service expects
-# When it runs 'gunicorn app:app', it looks for the 'app' variable in this file 
+# This is the variable that Azure App Service expects 
