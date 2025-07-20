@@ -34,15 +34,20 @@ response_data = {}
 
 def store_response_data(run_id: str, data: dict):
     """Store response data in database or fallback to memory."""
+    print(f"💾 Attempting to store data for run_id: {run_id}")
+    print(f"📦 Data to store: {data}")
+    
     if db_manager:
         # Try to store in Cosmos DB
         success = db_manager.store_response(run_id, data)
         if success:
+            print(f"✅ Stored in Cosmos DB for run_id: {run_id}")
             return True
     
     # Fallback to in-memory storage
     response_data[run_id] = data
     print(f"📝 Stored response data in memory for run_id: {run_id}")
+    print(f"📊 Current memory storage keys: {list(response_data.keys())}")
     return True
 
 def get_response_data(run_id: str):
@@ -203,6 +208,40 @@ def test_status(run_id):
             "timestamp": datetime.now().isoformat()
         }), 500
 
+@app.route("/test-storage")
+def test_storage():
+    """Test storage and retrieval functionality"""
+    try:
+        # Test storing some data
+        test_run_id = "test_123"
+        test_data = {
+            "run_id": test_run_id,
+            "query": "Test query",
+            "status": "test",
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        # Store the data
+        store_response_data(test_run_id, test_data)
+        
+        # Retrieve the data
+        retrieved_data = get_response_data(test_run_id)
+        
+        return jsonify({
+            "message": "Storage test completed",
+            "stored_data": test_data,
+            "retrieved_data": retrieved_data,
+            "storage_working": retrieved_data is not None,
+            "all_stored_keys": list(response_data.keys()) if response_data else [],
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
 @app.route("/start", methods=["POST"])
 def start():
     """Start an OpenAI response in background mode"""
@@ -250,10 +289,21 @@ def start():
 def get_status(run_id):
     """Get the status of a specific response"""
     try:
+        print(f"🔍 Looking for run_id: {run_id}")
+        print(f"📊 Current response_data keys: {list(response_data.keys()) if response_data else 'None'}")
+        
         # Get stored data
         data = get_response_data(run_id)
+        print(f"📋 Retrieved data for {run_id}: {data}")
+        
         if not data:
-            return jsonify({"error": "Response not found"}), 404
+            print(f"❌ No data found for run_id: {run_id}")
+            return jsonify({
+                "error": "Response not found", 
+                "run_id": run_id,
+                "available_keys": list(response_data.keys()) if response_data else [],
+                "debug_info": "No data found in storage"
+            }), 404
         
         # Try to get updated status from OpenAI
         try:
