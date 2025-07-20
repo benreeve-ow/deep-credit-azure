@@ -110,9 +110,22 @@ def index():
 @app.route("/debug")
 def debug():
     """Debug endpoint to see what's happening"""
+    # Format responses for the frontend
+    formatted_responses = {}
+    for run_id, data in response_data.items():
+        formatted_responses[run_id] = {
+            "query": data.get("query", ""),
+            "status": data.get("status", "unknown"),
+            "started_at": data.get("created_at", ""),
+            "completed_at": data.get("updated_at", ""),
+            "response": data.get("response_object", {}).get("output_text", ""),
+            "run_id": run_id
+        }
+    
     return {
         "message": "Debug endpoint working!",
         "timestamp": datetime.now().isoformat(),
+        "data": formatted_responses,  # Frontend expects this field
         "environment": {
             "WEBSITE_SITE_NAME": os.environ.get('WEBSITE_SITE_NAME', 'Not set'),
             "WEBSITE_HOSTNAME": os.environ.get('WEBSITE_HOSTNAME', 'Not set'),
@@ -326,7 +339,7 @@ def get_status(run_id):
             
             update_response_data(run_id, updates)
             
-            # Return the updated data
+            # Return the updated data in the format the frontend expects
             return jsonify({
                 "run_id": run_id,
                 "status": response.status,
