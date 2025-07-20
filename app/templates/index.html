@@ -1,35 +1,498 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Deep‑Research Editor (Python)</title>
-  <style>
-    body{font-family:system-ui,Helvetica,Arial,sans-serif;max-width:900px;margin:2rem}
-    input[type=text]{width:60ch;padding:.4rem;font-size:1rem}
-    button{padding:.4rem .8rem;font-size:1rem;margin-left:.4rem}
-    #report{white-space:pre-wrap;border:1px solid #ddd;border-radius:4px;
-            padding:1rem;height:60vh;overflow:auto;margin-top:1rem}
-    #versions{margin-top:1.5rem}
-    #versions h3{margin:0 0 .4rem 0}
-    #versions button{width:100%;text-align:left;margin-bottom:4px}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenAI Responses API Test App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .query-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .query-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .query-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .query-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-section {
+            background: #e8f4fd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .status-section.active {
+            display: block;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .response-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .response-section.active {
+            display: block;
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e1e5e9;
+        }
+
+        .response-content {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            font-size: 16px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .history-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+        }
+
+        .history-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .history-item {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .history-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .history-query {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .history-response {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .history-meta {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #363;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #363;
+        }
+
+        @media (max-width: 768px) {
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 OpenAI Responses API</h1>
+            <p>Test your queries with background processing and webhooks</p>
+        </div>
 
-<h1>Deep‑Research Editor</h1>
+        <div class="main-content">
+            <!-- Query Input Section -->
+            <div class="query-section">
+                <h2>📝 Enter Your Query</h2>
+                <div class="input-group">
+                    <input type="text" id="queryInput" class="query-input" 
+                           placeholder="Ask anything... (e.g., 'Explain quantum computing in simple terms')"
+                           maxlength="500">
+                    <button id="submitBtn" class="submit-btn">Send Query</button>
+                </div>
+            </div>
 
-<label>
-  <input id="query" type="text" placeholder="Ask a research question…">
-</label>
-<button id="runBtn">Run</button>
+            <!-- Status Section -->
+            <div id="statusSection" class="status-section">
+                <div class="status-indicator">
+                    <div class="spinner"></div>
+                    <span id="statusText">Processing your query...</span>
+                </div>
+                <div id="statusDetails"></div>
+            </div>
 
-<pre id="report">(report will appear here)</pre>
+            <!-- Response Section -->
+            <div id="responseSection" class="response-section">
+                <div class="response-header">
+                    <h3>💬 Response</h3>
+                    <span id="responseTime"></span>
+                </div>
+                <div id="responseContent" class="response-content"></div>
+            </div>
 
-<section id="versions">
-  <h3>Versions (click to roll back)</h3>
-  <div id="versionList"></div>
-</section>
+            <!-- History Section -->
+            <div class="history-section">
+                <h2>📚 Query History</h2>
+                <div id="historyList">
+                    <p style="color: #666; text-align: center; padding: 20px;">
+                        No queries yet. Start by entering a query above!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<script src="{{ url_for('static', filename='app.js') }}"></script>
+    <script>
+        let currentRunId = null;
+        let pollingInterval = null;
+
+        // DOM elements
+        const queryInput = document.getElementById('queryInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusSection = document.getElementById('statusSection');
+        const statusText = document.getElementById('statusText');
+        const statusDetails = document.getElementById('statusDetails');
+        const responseSection = document.getElementById('responseSection');
+        const responseContent = document.getElementById('responseContent');
+        const responseTime = document.getElementById('responseTime');
+        const historyList = document.getElementById('historyList');
+
+        // Event listeners
+        submitBtn.addEventListener('click', submitQuery);
+        queryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitQuery();
+        });
+
+        // Load history on page load
+        document.addEventListener('DOMContentLoaded', loadHistory);
+
+        async function submitQuery() {
+            const query = queryInput.value.trim();
+            if (!query) {
+                showError('Please enter a query');
+                return;
+            }
+
+            // Disable input and button
+            queryInput.disabled = true;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+
+            // Show status section
+            statusSection.classList.add('active');
+            responseSection.classList.remove('active');
+            statusText.textContent = 'Starting OpenAI response...';
+
+            try {
+                const response = await fetch('/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                currentRunId = data.run_id;
+                
+                statusText.textContent = 'Query submitted successfully!';
+                statusDetails.innerHTML = `
+                    <strong>Run ID:</strong> ${data.run_id}<br>
+                    <strong>Status:</strong> ${data.status}<br>
+                    <strong>Note:</strong> ${data.note}
+                `;
+
+                // Start polling for status
+                startPolling(data.run_id);
+
+            } catch (error) {
+                console.error('Error submitting query:', error);
+                showError('Failed to submit query: ' + error.message);
+                resetForm();
+            }
+        }
+
+        function startPolling(runId) {
+            statusText.textContent = 'Processing your query...';
+            
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/status/${runId}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    statusDetails.innerHTML = `
+                        <strong>Run ID:</strong> ${data.run_id}<br>
+                        <strong>OpenAI Status:</strong> ${data.openai_status}<br>
+                        <strong>Last Checked:</strong> ${new Date(data.last_checked).toLocaleTimeString()}
+                    `;
+
+                    if (data.openai_status === 'completed') {
+                        clearInterval(pollingInterval);
+                        showResponse(data);
+                        loadHistory(); // Refresh history
+                    } else if (data.openai_status === 'failed') {
+                        clearInterval(pollingInterval);
+                        showError('Query processing failed');
+                        resetForm();
+                    }
+
+                } catch (error) {
+                    console.error('Error polling status:', error);
+                    clearInterval(pollingInterval);
+                    showError('Failed to check status: ' + error.message);
+                    resetForm();
+                }
+            }, 2000); // Poll every 2 seconds
+        }
+
+        function showResponse(data) {
+            statusSection.classList.remove('active');
+            responseSection.classList.add('active');
+            
+            responseContent.textContent = data.response || 'Response completed but no content available.';
+            responseTime.textContent = `Completed at ${new Date(data.completed_at).toLocaleString()}`;
+            
+            resetForm();
+        }
+
+        function showError(message) {
+            statusSection.classList.remove('active');
+            responseSection.classList.remove('active');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            
+            const mainContent = document.querySelector('.main-content');
+            mainContent.insertBefore(errorDiv, mainContent.firstChild);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        function resetForm() {
+            queryInput.disabled = false;
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send Query';
+            queryInput.value = '';
+            queryInput.focus();
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch('/debug');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const responses = data.data;
+                
+                if (Object.keys(responses).length === 0) {
+                    historyList.innerHTML = `
+                        <p style="color: #666; text-align: center; padding: 20px;">
+                            No queries yet. Start by entering a query above!
+                        </p>
+                    `;
+                    return;
+                }
+
+                const historyHTML = Object.entries(responses)
+                    .sort((a, b) => new Date(b[1].completed_at || b[1].started_at) - new Date(a[1].completed_at || a[1].started_at))
+                    .map(([runId, response]) => `
+                        <div class="history-item" onclick="showHistoryResponse('${runId}')">
+                            <div class="history-query">${response.query}</div>
+                            <div class="history-response">
+                                ${response.response ? response.response.substring(0, 150) + '...' : 'Processing...'}
+                            </div>
+                            <div class="history-meta">
+                                <strong>Status:</strong> ${response.status} | 
+                                <strong>Started:</strong> ${new Date(response.started_at).toLocaleString()}
+                                ${response.completed_at ? ` | <strong>Completed:</strong> ${new Date(response.completed_at).toLocaleString()}` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+
+                historyList.innerHTML = historyHTML;
+
+            } catch (error) {
+                console.error('Error loading history:', error);
+                historyList.innerHTML = `
+                    <p style="color: #c33; text-align: center; padding: 20px;">
+                        Failed to load history: ${error.message}
+                    </p>
+                `;
+            }
+        }
+
+        function showHistoryResponse(runId) {
+            // This could be enhanced to show the full response in a modal
+            // For now, we'll just scroll to the response section if it's the current one
+            if (runId === currentRunId) {
+                responseSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    </script>
 </body>
 </html>
