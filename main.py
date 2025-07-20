@@ -19,7 +19,7 @@ load_dotenv()
 from app import responses, db
 
 # Create Flask app
-app = Flask(__name__)
+app = Flask(__name__, template_folder='app/templates')
 
 # Add some debugging
 print(f"Flask app created. Environment: {os.environ.get('WEBSITE_SITE_NAME', 'Unknown')}")
@@ -153,6 +153,24 @@ def api_status():
 def test():
     """Simple test endpoint"""
     return {"message": "Test endpoint working", "timestamp": datetime.now().isoformat()}
+
+@app.route("/test-openai")
+def test_openai():
+    """Test OpenAI integration"""
+    try:
+        # Test a simple OpenAI response
+        result = responses.edit_snippet("Hello world", "Make this more formal")
+        return {
+            "message": "OpenAI integration working!",
+            "result": result,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        return {
+            "message": "OpenAI integration failed",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
 
 @app.route("/start", methods=["POST"])
 def start():
