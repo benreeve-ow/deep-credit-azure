@@ -30,14 +30,23 @@ FLASK_ENV = production
 WEBSITES_PORT = 8000
 ```
 
-### 1.2 Generate Flask Secret Key
+### 1.2 Configure Startup Command
+
+**IMPORTANT**: You need to set the startup command for your App Service:
+
+1. Go to your Azure App Service `deep-credit-py-api`
+2. Navigate to **Configuration** > **General settings**
+3. Set **Startup Command** to: `python app.py`
+4. Click **Save**
+
+### 1.3 Generate Flask Secret Key
 
 Run this command to generate a secure secret key:
 ```bash
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-### 1.3 Get Cosmos DB Connection String
+### 1.4 Get Cosmos DB Connection String
 
 1. Go to your Cosmos DB account `cosmos-deepcredit` in Azure Portal
 2. Navigate to **Keys** in the left sidebar
@@ -149,6 +158,11 @@ View logs in Azure Portal:
    - Throughput
 
 ### 6.3 Common Issues
+
+#### Issue: "Default Python welcome page appears"
+**Solution**: 
+1. Set the startup command to `python app.py` in App Service Configuration
+2. Restart the App Service after making changes
 
 #### Issue: "No Cosmos DB connection string found"
 **Solution**: Ensure `COSMOS_CONN` is set in App Service Configuration
