@@ -255,6 +255,34 @@ def test_storage():
             "timestamp": datetime.now().isoformat()
         }), 500
 
+@app.route("/current-status")
+def current_status():
+    """Get current status of all stored responses for debugging"""
+    try:
+        formatted_responses = {}
+        for run_id, data in response_data.items():
+            formatted_responses[run_id] = {
+                "query": data.get("query", ""),
+                "status": data.get("status", "unknown"),
+                "started_at": data.get("created_at", ""),
+                "completed_at": data.get("updated_at", ""),
+                "response": data.get("response_object", {}).get("output_text", ""),
+                "run_id": run_id
+            }
+        
+        return jsonify({
+            "message": "Current status of all responses",
+            "data": formatted_responses,
+            "count": len(formatted_responses),
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
 @app.route("/start", methods=["POST"])
 def start():
     """Start an OpenAI response in background mode"""
@@ -348,7 +376,12 @@ def get_status(run_id):
                 "updated_at": updates["updated_at"],
                 "output_text": getattr(response, 'output_text', ""),
                 "error": getattr(response, 'error', ""),
-                "note": ""  # Ensure note field is always present
+                "note": "",  # Ensure note field is always present
+                # Frontend expects these specific fields
+                "openai_status": response.status,
+                "last_checked": datetime.utcnow().isoformat(),
+                "response": getattr(response, 'output_text', ""),
+                "completed_at": updates["updated_at"] if response.status == "completed" else ""
             })
             
         except Exception as e:
@@ -362,7 +395,12 @@ def get_status(run_id):
                 "updated_at": data.get("updated_at", ""),
                 "output_text": "",
                 "error": "",
-                "note": f"Using cached data. OpenAI fetch error: {str(e)}"
+                "note": f"Using cached data. OpenAI fetch error: {str(e)}",
+                # Frontend expects these specific fields
+                "openai_status": data.get("status", "unknown"),
+                "last_checked": datetime.utcnow().isoformat(),
+                "response": data.get("response_object", {}).get("output_text", ""),
+                "completed_at": data.get("updated_at", "") if data.get("status") == "completed" else ""
             })
         
     except Exception as e:
