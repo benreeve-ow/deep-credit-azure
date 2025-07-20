@@ -115,6 +115,10 @@ def debug():
             "python_version": sys.version,
             "working_directory": os.getcwd(),
             "files_in_directory": os.listdir(".")
+        },
+        "stored_responses": {
+            "count": len(response_data),
+            "keys": list(response_data.keys()) if response_data else []
         }
     }
 
@@ -171,6 +175,33 @@ def test_openai():
             "error": str(e),
             "timestamp": datetime.now().isoformat()
         }
+
+@app.route("/test-status/<run_id>")
+def test_status(run_id):
+    """Test status endpoint with a specific run_id"""
+    try:
+        # Get stored data
+        data = get_response_data(run_id)
+        if not data:
+            return jsonify({
+                "error": "Response not found",
+                "run_id": run_id,
+                "available_responses": list(response_data.keys()) if response_data else []
+            }), 404
+        
+        return jsonify({
+            "message": "Status endpoint working",
+            "run_id": run_id,
+            "data": data,
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "run_id": run_id,
+            "timestamp": datetime.now().isoformat()
+        }), 500
 
 @app.route("/start", methods=["POST"])
 def start():
@@ -249,11 +280,12 @@ def get_status(run_id):
             return jsonify({
                 "run_id": run_id,
                 "status": response.status,
-                "query": data.get("query"),
-                "created_at": data.get("created_at"),
+                "query": data.get("query", ""),
+                "created_at": data.get("created_at", ""),
                 "updated_at": updates["updated_at"],
-                "output_text": getattr(response, 'output_text', None),
-                "error": getattr(response, 'error', None)
+                "output_text": getattr(response, 'output_text', ""),
+                "error": getattr(response, 'error', ""),
+                "note": ""  # Ensure note field is always present
             })
             
         except Exception as e:
@@ -262,8 +294,11 @@ def get_status(run_id):
             return jsonify({
                 "run_id": run_id,
                 "status": data.get("status", "unknown"),
-                "query": data.get("query"),
-                "created_at": data.get("created_at"),
+                "query": data.get("query", ""),
+                "created_at": data.get("created_at", ""),
+                "updated_at": data.get("updated_at", ""),
+                "output_text": "",
+                "error": "",
                 "note": f"Using cached data. OpenAI fetch error: {str(e)}"
             })
         
@@ -275,15 +310,24 @@ def get_status(run_id):
 def list_responses():
     """List all stored responses"""
     try:
-        responses = get_all_responses()
+        responses_list = get_all_responses()
+        # Ensure we return an array, not an object
+        if not isinstance(responses_list, list):
+            responses_list = []
+        
         return jsonify({
-            "responses": responses,
-            "count": len(responses),
+            "responses": responses_list,
+            "count": len(responses_list),
             "timestamp": datetime.now().isoformat()
         })
     except Exception as e:
         print(f"❌ Error listing responses: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "responses": [],
+            "count": 0,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        })
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
