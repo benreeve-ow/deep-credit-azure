@@ -293,24 +293,23 @@ def start():
         entity_name = data['query'].strip()
         if not entity_name:
             return jsonify({"error": "Entity name cannot be empty"}), 400
-
+        model = data.get('model', 'o4-mini-deep-research')
         # Read the prompt template from the markdown file
         with open("credit_rating_prompt.md", "r") as f:
             prompt_template = f.read()
         # Substitute placeholders
         today = datetime.utcnow().strftime("%Y-%m-%d")
         final_prompt = prompt_template.replace("{{company}}", entity_name).replace("{{date}}", today)
-
-        print(f"🚀 Starting credit rating report for: {entity_name}")
+        print(f"🚀 Starting credit rating report for: {entity_name} (model: {model})")
         print(f"📝 Final prompt: {final_prompt[:200]}...")
-
-        # Start the response using the final prompt
-        response = responses.start_research(final_prompt, "")
+        # Start the response using the final prompt and selected model
+        response = responses.start_research(final_prompt, "", model=model)
         run_id = response.id
         initial_data = {
             "run_id": run_id,
             "entity_name": entity_name,
             "prompt": final_prompt,
+            "model": model,
             "status": "started",
             "created_at": datetime.utcnow().isoformat(),
             "response_object": {
@@ -324,7 +323,7 @@ def start():
             "run_id": run_id,
             "status": "started",
             "message": "Credit rating report started in background mode",
-            "note": "Report is being generated for entity: {}".format(entity_name),
+            "note": f"Report is being generated for entity: {entity_name} (model: {model})",
             "poll_url": f"/status/{run_id}"
         })
     except Exception as e:

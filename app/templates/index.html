@@ -213,6 +213,10 @@
                     <input type="text" id="queryInput" class="query-input" 
                            placeholder="e.g., 'Acme Corporation'"
                            maxlength="200">
+                    <select id="modelSelect" class="query-input" style="max-width:220px;">
+                        <option value="o4-mini-deep-research">o4-mini-deep-research</option>
+                        <option value="o3-deep-research">o3-deep-research</option>
+                    </select>
                     <button id="submitBtn" class="submit-btn">Generate Report</button>
                 </div>
             </div>
@@ -265,6 +269,7 @@
         document.addEventListener('DOMContentLoaded', loadHistory);
         async function submitQuery() {
             const query = queryInput.value.trim();
+            const model = document.getElementById('modelSelect').value;
             if (!query) {
                 showError('Please enter an entity name');
                 return;
@@ -281,7 +286,7 @@
                 const response = await fetch('/start', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query })
+                    body: JSON.stringify({ query, model })
                 });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
