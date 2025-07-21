@@ -14,7 +14,7 @@
             padding: 0;
         }
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 40px auto;
             background: #fff;
             border-radius: 12px;
@@ -114,10 +114,11 @@
         .response-section {
             background: #fafbfc;
             border-radius: 8px;
-            padding: 24px;
+            padding: 32px 40px;
             margin-bottom: 32px;
             border: 1px solid #eee;
             display: none;
+            max-width: 100%;
         }
         .response-section.active { display: block; }
         .response-header {
@@ -131,11 +132,35 @@
         .response-content {
             background: #fff;
             border-radius: 6px;
-            padding: 18px;
+            padding: 28px 32px;
             border-left: 3px solid #111;
             font-size: 16px;
-            line-height: 1.6;
-            white-space: pre-wrap;
+            line-height: 1.7;
+            white-space: normal;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        .reference-links {
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+            font-size: 15px;
+        }
+        .reference-link-btn {
+            display: inline-block;
+            margin: 0 8px 8px 0;
+            padding: 6px 14px;
+            background: #111;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .reference-link-btn:hover {
+            background: #333;
         }
         .history-section {
             background: #fafbfc;
@@ -195,9 +220,13 @@
         @media (max-width: 768px) {
             .input-group { flex-direction: column; }
             .header h1 { font-size: 1.5rem; }
-            .main-content { padding: 16px; }
+            .main-content { padding: 8px; }
+            .response-section { padding: 12px 2px; }
+            .response-content { padding: 10px 2px; }
         }
     </style>
+    <!-- Add marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -341,7 +370,30 @@
         function showResponse(data) {
             statusSection.classList.remove('active');
             responseSection.classList.add('active');
-            responseContent.textContent = data.response || 'Report completed but no content available.';
+            // Render Markdown and process links
+            const raw = data.response || 'Report completed but no content available.';
+            // Extract all markdown links: [text](url)
+            const linkRegex = /\[([^\]]+)\]\(([^\)]+)\)/g;
+            let links = [];
+            let replaced = raw;
+            let match;
+            let refNum = 1;
+            // Replace links with [n] and collect them
+            replaced = replaced.replace(linkRegex, function(_, text, url) {
+                links.push({text, url, num: refNum});
+                return `${text}<sup>[${refNum++}]</sup>`;
+            });
+            // Render markdown
+            let html = marked.parse(replaced);
+            // Add reference links as buttons at the end
+            if (links.length > 0) {
+                html += '<div class="reference-links"><strong>References:</strong><br>';
+                links.forEach(link => {
+                    html += `<a class="reference-link-btn" href="${link.url}" target="_blank" rel="noopener">[${link.num}] ${link.text}</a> `;
+                });
+                html += '</div>';
+            }
+            responseContent.innerHTML = html;
             responseTime.textContent = `Completed at ${new Date(data.completed_at).toLocaleString()}`;
             resetForm();
         }
