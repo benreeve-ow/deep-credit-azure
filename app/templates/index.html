@@ -3,301 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenAI Responses API Test App</title>
+    <title>Deep Credit Rating Agent</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #fff;
+            color: #111;
             min-height: 100vh;
-            padding: 20px;
+            padding: 0;
         }
-
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.07);
             overflow: hidden;
+            border: 1px solid #eee;
         }
-
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
+            background: #fff;
+            color: #111;
+            padding: 32px 32px 16px 32px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
         }
-
         .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            font-weight: 700;
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 8px;
         }
-
         .header p {
             font-size: 1.1rem;
-            opacity: 0.9;
+            color: #666;
         }
-
-        .main-content {
-            padding: 40px;
-        }
-
+        .main-content { padding: 32px; }
         .query-section {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 30px;
+            background: #fafbfc;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 32px;
+            border: 1px solid #eee;
         }
-
         .query-section h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
+            color: #111;
+            margin-bottom: 18px;
+            font-size: 1.2rem;
+            font-weight: 700;
         }
-
         .input-group {
             display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 12px;
         }
-
         .query-input {
             flex: 1;
-            padding: 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
+            padding: 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
             font-size: 16px;
-            transition: border-color 0.3s ease;
+            background: #fff;
+            color: #111;
+            transition: border-color 0.2s;
         }
-
         .query-input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #111;
         }
-
         .submit-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #111;
+            color: #fff;
             border: none;
-            padding: 15px 30px;
-            border-radius: 8px;
+            padding: 14px 28px;
+            border-radius: 6px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s ease;
+            transition: background 0.2s;
         }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-        }
-
+        .submit-btn:hover { background: #222; }
         .submit-btn:disabled {
-            opacity: 0.6;
+            opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
-
         .status-section {
-            background: #e8f4fd;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
+            background: #f6f6f6;
+            border-radius: 8px;
+            padding: 18px;
+            margin-bottom: 24px;
+            border: 1px solid #eee;
             display: none;
         }
-
-        .status-section.active {
-            display: block;
-        }
-
+        .status-section.active { display: block; }
         .status-indicator {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
-
         .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #667eea;
+            width: 18px; height: 18px;
+            border: 2px solid #eee;
+            border-top: 2px solid #111;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .response-section {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 30px;
+            background: #fafbfc;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 32px;
+            border: 1px solid #eee;
             display: none;
         }
-
-        .response-section.active {
-            display: block;
-        }
-
+        .response-section.active { display: block; }
         .response-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e1e5e9;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
         }
-
         .response-content {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            border-left: 4px solid #667eea;
+            background: #fff;
+            border-radius: 6px;
+            padding: 18px;
+            border-left: 3px solid #111;
             font-size: 16px;
             line-height: 1.6;
             white-space: pre-wrap;
         }
-
         .history-section {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 30px;
-        }
-
-        .history-section h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
-        }
-
-        .history-item {
-            background: white;
+            background: #fafbfc;
             border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-left: 4px solid #667eea;
+            padding: 24px;
+            border: 1px solid #eee;
+        }
+        .history-section h2 {
+            color: #111;
+            margin-bottom: 18px;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .history-item {
+            background: #fff;
+            border-radius: 6px;
+            padding: 18px;
+            margin-bottom: 12px;
+            border-left: 3px solid #111;
             cursor: pointer;
-            transition: transform 0.2s ease;
+            transition: background 0.15s;
         }
-
         .history-item:hover {
-            transform: translateY(-2px);
+            background: #f3f3f3;
         }
-
         .history-query {
             font-weight: 600;
-            color: #333;
-            margin-bottom: 10px;
+            color: #111;
+            margin-bottom: 8px;
         }
-
         .history-response {
-            color: #666;
+            color: #444;
             font-size: 14px;
             line-height: 1.4;
         }
-
         .history-meta {
-            margin-top: 10px;
+            margin-top: 8px;
             font-size: 12px;
             color: #999;
         }
-
         .error-message {
-            background: #fee;
+            background: #fff0f0;
             color: #c33;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid #c33;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            border-left: 3px solid #c33;
         }
-
         .success-message {
-            background: #efe;
+            background: #f0fff0;
             color: #363;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid #363;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            border-left: 3px solid #363;
         }
-
         @media (max-width: 768px) {
-            .input-group {
-                flex-direction: column;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .main-content {
-                padding: 20px;
-            }
+            .input-group { flex-direction: column; }
+            .header h1 { font-size: 1.5rem; }
+            .main-content { padding: 16px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 OpenAI Responses API</h1>
-            <p>Test your queries with background processing and webhooks</p>
+            <h1>Deep Credit Rating Agent</h1>
+            <p>Enter an entity name to generate and save a credit rating report automatically.</p>
         </div>
-
         <div class="main-content">
             <!-- Query Input Section -->
             <div class="query-section">
-                <h2>📝 Enter Your Query</h2>
+                <h2>🏢 Enter Entity Name</h2>
                 <div class="input-group">
                     <input type="text" id="queryInput" class="query-input" 
-                           placeholder="Ask anything... (e.g., 'Explain quantum computing in simple terms')"
-                           maxlength="500">
-                    <button id="submitBtn" class="submit-btn">Send Query</button>
+                           placeholder="e.g., 'Acme Corporation'"
+                           maxlength="200">
+                    <button id="submitBtn" class="submit-btn">Generate Report</button>
                 </div>
             </div>
-
             <!-- Status Section -->
             <div id="statusSection" class="status-section">
                 <div class="status-indicator">
                     <div class="spinner"></div>
-                    <span id="statusText">Processing your query...</span>
+                    <span id="statusText">Processing your request...</span>
                 </div>
                 <div id="statusDetails"></div>
             </div>
-
             <!-- Response Section -->
             <div id="responseSection" class="response-section">
                 <div class="response-header">
-                    <h3>💬 Response</h3>
+                    <h3>📄 Credit Rating Report</h3>
                     <span id="responseTime"></span>
                 </div>
                 <div id="responseContent" class="response-content"></div>
             </div>
-
             <!-- History Section -->
             <div class="history-section">
-                <h2>📚 Query History</h2>
+                <h2>🕑 Report History</h2>
                 <div id="historyList">
                     <p style="color: #666; text-align: center; padding: 20px;">
-                        No queries yet. Start by entering a query above!
+                        No reports yet. Start by entering an entity name above!
                     </p>
                 </div>
             </div>
         </div>
     </div>
-
     <script>
         let currentRunId = null;
         let pollingInterval = null;
-
         // DOM elements
         const queryInput = document.getElementById('queryInput');
         const submitBtn = document.getElementById('submitBtn');
@@ -308,94 +256,75 @@
         const responseContent = document.getElementById('responseContent');
         const responseTime = document.getElementById('responseTime');
         const historyList = document.getElementById('historyList');
-
         // Event listeners
         submitBtn.addEventListener('click', submitQuery);
         queryInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') submitQuery();
         });
-
         // Load history on page load
         document.addEventListener('DOMContentLoaded', loadHistory);
-
         async function submitQuery() {
             const query = queryInput.value.trim();
             if (!query) {
-                showError('Please enter a query');
+                showError('Please enter an entity name');
                 return;
             }
-
             // Disable input and button
             queryInput.disabled = true;
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Sending...';
-
+            submitBtn.textContent = 'Generating...';
             // Show status section
             statusSection.classList.add('active');
             responseSection.classList.remove('active');
-            statusText.textContent = 'Starting OpenAI response...';
-
+            statusText.textContent = 'Generating credit rating report...';
             try {
                 const response = await fetch('/start', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ query })
                 });
-
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-
                 const data = await response.json();
                 currentRunId = data.run_id;
-                
-                statusText.textContent = 'Query submitted successfully!';
+                statusText.textContent = 'Report request submitted!';
                 statusDetails.innerHTML = `
                     <strong>Run ID:</strong> ${data.run_id}<br>
                     <strong>Status:</strong> ${data.status}<br>
-                    <strong>Note:</strong> ${data.note}
+                    <strong>Note:</strong> ${data.note || ''}
                 `;
-
                 // Start polling for status
                 startPolling(data.run_id);
-
             } catch (error) {
                 console.error('Error submitting query:', error);
-                showError('Failed to submit query: ' + error.message);
+                showError('Failed to submit request: ' + error.message);
                 resetForm();
             }
         }
-
         function startPolling(runId) {
-            statusText.textContent = 'Processing your query...';
-            
+            statusText.textContent = 'Processing your request...';
             pollingInterval = setInterval(async () => {
                 try {
                     const response = await fetch(`/status/${runId}`);
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-
                     const data = await response.json();
-                    
                     statusDetails.innerHTML = `
                         <strong>Run ID:</strong> ${data.run_id}<br>
-                        <strong>OpenAI Status:</strong> ${data.openai_status}<br>
+                        <strong>Status:</strong> ${data.openai_status}<br>
                         <strong>Last Checked:</strong> ${new Date(data.last_checked).toLocaleTimeString()}
                     `;
-
                     if (data.openai_status === 'completed') {
                         clearInterval(pollingInterval);
                         showResponse(data);
                         loadHistory(); // Refresh history
                     } else if (data.openai_status === 'failed') {
                         clearInterval(pollingInterval);
-                        showError('Query processing failed');
+                        showError('Report generation failed');
                         resetForm();
                     }
-
                 } catch (error) {
                     console.error('Error polling status:', error);
                     clearInterval(pollingInterval);
@@ -404,60 +333,46 @@
                 }
             }, 2000); // Poll every 2 seconds
         }
-
         function showResponse(data) {
             statusSection.classList.remove('active');
             responseSection.classList.add('active');
-            
-            responseContent.textContent = data.response || 'Response completed but no content available.';
+            responseContent.textContent = data.response || 'Report completed but no content available.';
             responseTime.textContent = `Completed at ${new Date(data.completed_at).toLocaleString()}`;
-            
             resetForm();
         }
-
         function showError(message) {
             statusSection.classList.remove('active');
             responseSection.classList.remove('active');
-            
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
             errorDiv.textContent = message;
-            
             const mainContent = document.querySelector('.main-content');
             mainContent.insertBefore(errorDiv, mainContent.firstChild);
-            
-            setTimeout(() => {
-                errorDiv.remove();
-            }, 5000);
+            setTimeout(() => { errorDiv.remove(); }, 5000);
         }
-
         function resetForm() {
             queryInput.disabled = false;
             submitBtn.disabled = false;
-            submitBtn.textContent = 'Send Query';
+            submitBtn.textContent = 'Generate Report';
             queryInput.value = '';
             queryInput.focus();
         }
-
         async function loadHistory() {
             try {
                 const response = await fetch('/debug');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-
                 const data = await response.json();
                 const responses = data.data;
-                
                 if (Object.keys(responses).length === 0) {
                     historyList.innerHTML = `
                         <p style="color: #666; text-align: center; padding: 20px;">
-                            No queries yet. Start by entering a query above!
+                            No reports yet. Start by entering an entity name above!
                         </p>
                     `;
                     return;
                 }
-
                 const historyHTML = Object.entries(responses)
                     .sort((a, b) => new Date(b[1].completed_at || b[1].started_at) - new Date(a[1].completed_at || a[1].started_at))
                     .map(([runId, response]) => `
@@ -473,9 +388,7 @@
                             </div>
                         </div>
                     `).join('');
-
                 historyList.innerHTML = historyHTML;
-
             } catch (error) {
                 console.error('Error loading history:', error);
                 historyList.innerHTML = `
@@ -485,13 +398,16 @@
                 `;
             }
         }
-
         function showHistoryResponse(runId) {
-            // This could be enhanced to show the full response in a modal
-            // For now, we'll just scroll to the response section if it's the current one
-            if (runId === currentRunId) {
-                responseSection.scrollIntoView({ behavior: 'smooth' });
-            }
+            // Fetch the status for the selected runId and show in the response area
+            fetch(`/status/${runId}`)
+                .then(res => res.json())
+                .then(data => {
+                    showResponse(data);
+                })
+                .catch(error => {
+                    showError('Failed to load report: ' + error.message);
+                });
         }
     </script>
 </body>

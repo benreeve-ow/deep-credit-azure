@@ -209,8 +209,8 @@ class CosmosDBManager:
             return []
         except Exception as e:
             print(f"❌ Unexpected error listing responses: {str(e)}")
-            return []
-    
+        return []
+
     def delete_response(self, run_id: str) -> bool:
         """
         Delete a response by run_id.

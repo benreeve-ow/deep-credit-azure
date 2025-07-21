@@ -178,18 +178,18 @@ def get_status(run_id):
             
             # Update our stored data with latest info
             updates = {
-                "openai_status": openai_status,
-                "last_checked": datetime.now().isoformat()
+                    "openai_status": openai_status,
+                    "last_checked": datetime.now().isoformat()
             }
-            
-            if openai_status == "completed" and output_text:
+                
+                if openai_status == "completed" and output_text:
                 updates.update({
-                    "status": "completed",
-                    "response": output_text,
-                    "completed_at": datetime.now().isoformat()
-                })
-                print(f"✅ Response completed for {run_id}")
-                print(f"📝 Response preview: {output_text[:100]}...")
+                        "status": "completed",
+                        "response": output_text,
+                        "completed_at": datetime.now().isoformat()
+                    })
+                    print(f"✅ Response completed for {run_id}")
+                    print(f"📝 Response preview: {output_text[:100]}...")
             
             update_response_data(run_id, updates)
             
@@ -306,11 +306,11 @@ def webhook():
         
         # Update stored data
         updates = {
-            "status": "completed",
-            "response": response_text or "Response completed via webhook",
-            "completed_at": datetime.now().isoformat(),
-            "webhook_payload": payload
-        }
+                "status": "completed",
+                "response": response_text or "Response completed via webhook",
+                "completed_at": datetime.now().isoformat(),
+                "webhook_payload": payload
+            }
         
         update_response_data(run_id, updates)
         

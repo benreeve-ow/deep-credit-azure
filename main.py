@@ -285,25 +285,32 @@ def current_status():
 
 @app.route("/start", methods=["POST"])
 def start():
-    """Start an OpenAI response in background mode"""
+    """Start a credit rating report for an entity name using the markdown prompt template."""
     try:
         data = request.get_json()
         if not data or 'query' not in data:
             return jsonify({"error": "Missing 'query' in request body"}), 400
-        
-        query = data['query']
-        webhook_url = data.get('webhook_url', '')  # Not used in new API but kept for compatibility
-        
-        print(f"🚀 Starting OpenAI response for query: {query}")
-        
-        # Start the response using background mode
-        response = responses.start_research(query, webhook_url)
-        
-        # Store initial data
+        entity_name = data['query'].strip()
+        if not entity_name:
+            return jsonify({"error": "Entity name cannot be empty"}), 400
+
+        # Read the prompt template from the markdown file
+        with open("credit_rating_prompt.md", "r") as f:
+            prompt_template = f.read()
+        # Substitute placeholders
+        today = datetime.utcnow().strftime("%Y-%m-%d")
+        final_prompt = prompt_template.replace("{{company}}", entity_name).replace("{{date}}", today)
+
+        print(f"🚀 Starting credit rating report for: {entity_name}")
+        print(f"📝 Final prompt: {final_prompt[:200]}...")
+
+        # Start the response using the final prompt
+        response = responses.start_research(final_prompt, "")
         run_id = response.id
         initial_data = {
             "run_id": run_id,
-            "query": query,
+            "entity_name": entity_name,
+            "prompt": final_prompt,
             "status": "started",
             "created_at": datetime.utcnow().isoformat(),
             "response_object": {
@@ -312,16 +319,14 @@ def start():
                 "model": response.model
             }
         }
-        
         store_response_data(run_id, initial_data)
-        
         return jsonify({
             "run_id": run_id,
             "status": "started",
-            "message": "OpenAI response started in background mode",
+            "message": "Credit rating report started in background mode",
+            "note": "Report is being generated for entity: {}".format(entity_name),
             "poll_url": f"/status/{run_id}"
         })
-        
     except Exception as e:
         print(f"❌ Error starting response: {str(e)}")
         return jsonify({"error": str(e)}), 500
